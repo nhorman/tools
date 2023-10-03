@@ -138,7 +138,9 @@ int main(int argc, char *argv[])
     }
 
     readers = threadcount - writers;
-    printf("Running rwlock test with %d writers and %d readers\n", writers, readers);
+
+    if (!terse)
+        printf("Running rwlock test with %d writers and %d readers\n", writers, readers);
 
     start = ossl_time_now(); 
 
@@ -155,11 +157,14 @@ int main(int argc, char *argv[])
     us = ossl_time2us(ossl_time_subtract(writer_end, start));
     avwcalltime = (double)us / (double)write_lock_calls;
 
-    printf("total write lock/unlock calls %d in %lf us\n", write_lock_calls, (double)us);
+    if (!terse)
+        printf("total write lock/unlock calls %d in %lf us\n", write_lock_calls, (double)us);
 
     us = ossl_time2us(ossl_time_subtract(reader_end, start));
     avrcalltime = (double)us / (double)read_lock_calls;
-    printf("total read lock/unlock calls %d %lf us\n", read_lock_calls, (double)us);
+    if (!terse)
+        printf("total read lock/unlock calls %d %lf us\n", read_lock_calls, (double)us);
+
     if (terse)
         printf("%lf %lf\n", avwcalltime, avrcalltime);
     else {
