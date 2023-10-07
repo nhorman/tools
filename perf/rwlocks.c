@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <signal.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
@@ -28,6 +30,7 @@ int write_lock_calls = 0;
 int read_lock_calls = 0;
 OSSL_TIME reader_end = { 0 };
 OSSL_TIME writer_end = { 0 };
+int stop = 0;
 
 CRYPTO_RWLOCK *lock = NULL;
 
@@ -37,7 +40,7 @@ void do_rw_wlock(size_t num)
     unsigned long *newval, *oldval;
     int local_write_lock_calls = 0;
 
-    for (i = 0; i < NUM_CALLS_PER_THREAD; i++) {
+    while (stop != 1) {
         newval = OPENSSL_malloc(sizeof(int));        
         CRYPTO_THREAD_write_lock(lock);
         if (dataval == NULL)
@@ -65,7 +68,7 @@ void do_rw_rlock(size_t num)
     unsigned long last_val = 0;
     int local_read_lock_calls = 0;
 
-    for (i = 0; i < NUM_CALLS_PER_THREAD; i++) {
+    while (stop != 1) {
         CRYPTO_THREAD_read_lock(lock);
         if (dataval != NULL) {
             if (last_val != 0 && last_val > *dataval)
@@ -92,6 +95,11 @@ void do_rwlocks(size_t num)
         do_rw_rlock(num);
 }
 
+static void handle_alarm(int sig)
+{
+    stop = 1;
+}
+
 int main(int argc, char *argv[])
 {
     OSSL_TIME duration;
@@ -102,6 +110,7 @@ int main(int argc, char *argv[])
     int terse = 0;
     int argnext;
     char *writeenv;
+    int orig_writers;
 
     if ((argc != 2 && argc != 3)
                 || (argc == 3 && strcmp("--terse", argv[1]) != 0)) {
@@ -127,8 +136,6 @@ int main(int argc, char *argv[])
         writers = threadcount / 2;
     } else {
         writers=atoi(writeenv);
-        if (writers == 0)
-            writers = threadcount / 2;
     }
 
     lock = CRYPTO_THREAD_lock_new();
@@ -137,12 +144,17 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    orig_writers = writers;
     readers = threadcount - writers;
 
     if (!terse)
         printf("Running rwlock test with %d writers and %d readers\n", writers, readers);
 
+    signal(SIGALRM, handle_alarm);
+
     start = ossl_time_now(); 
+
+    alarm(5);
 
     if (!perflib_run_multi_thread_test(do_rwlocks, threadcount, &duration)) {
         printf("Failed to run the test\n");
@@ -154,8 +166,13 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    us = ossl_time2us(ossl_time_subtract(writer_end, start));
-    avwcalltime = (double)us / (double)write_lock_calls;
+    if (orig_writers != 0) {
+        us = ossl_time2us(ossl_time_subtract(writer_end, start));
+        avwcalltime = (double)us / (double)write_lock_calls;
+    } else {
+        us = 0;
+        avwcalltime = 0;
+    }
 
     if (!terse)
         printf("total write lock/unlock calls %d in %lf us\n", write_lock_calls, (double)us);
