@@ -103,6 +103,11 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    /*
+     * need to run once to avoid not found errors
+     */
+    do_pemread(0);
+
     if (!perflib_run_multi_thread_test(do_pemread, threadcount, &duration)) {
         printf("Failed to run the test\n");
         return EXIT_FAILURE;

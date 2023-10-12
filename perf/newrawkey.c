@@ -68,6 +68,14 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    /*
+     * need to run this once first to avoid the race condition
+     * in which the first thread through gets scheduled and
+     * winds up never adding all the evp methods prior to
+     * all the other threads trying to look it up
+     */
+    do_newrawkey(0);
+
     if (!perflib_run_multi_thread_test(do_newrawkey, threadcount, &duration)) {
         printf("Failed to run the test\n");
         return EXIT_FAILURE;

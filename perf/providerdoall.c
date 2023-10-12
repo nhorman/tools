@@ -86,6 +86,11 @@ int main(int argc, char *argv[])
         goto err;
     }
 
+    /*
+     * run once to avoid not found errors
+     */
+    do_providerdoall(0);
+
     if (!perflib_run_multi_thread_test(do_providerdoall, threadcount, &duration)) {
         printf("Failed to run the test\n");
         goto err;
