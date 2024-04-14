@@ -22,6 +22,7 @@ TYPE=none
 
 GH_PROJECT_ID=none
 GH_PROPOSED_RELEASE_FIELD=none
+GH_CONTEXT_FIELD=none
 GH_PRIORITY_FIELD=none
 GH_RELEASE_LIST=()
 
@@ -33,6 +34,7 @@ function load_github_ids {
         # we have our cached values, load them
         GH_PROJECT_ID=$(git config --local --get triage.gh-project-id)
         GH_PROPOSED_RELEASE_FIELD=$(git config --local --get triage.gh-proposed-release-field)
+        GH_CONTEXT_FIELD=$(git config --local --get triage.gh-context-field)
         GH_PRIORITY_FIELD=$(git config --local --get triage.gh-priority-field)
         for i in $(git config --local --get triage.gh-release-list)
         do
@@ -44,6 +46,8 @@ function load_github_ids {
         git config --local triage.gh-project-id $GH_PROJECT_ID
         GH_PROPOSED_RELEASE_FIELD=$(gh project field-list --owner openssl 2 --format json --jq '.fields[] | select(.name == "Proposed Release") | .id')
         git config --local triage.gh-proposed-release-field $GH_PROPOSED_RELEASE_FIELD
+        GH_CONTEXT_FIELD=$(gh project field-list --owner openssl 2 --format json --jq '.fields[] | select(.name == "Context") | .id')
+        git config --local triage.gh-context-field $GH_CONTEXT_FIELD
         GH_PRIORITY_FIELD=$(gh project field-list --owner openssl 2 --format json --jq '.fields[] | select(.name == "Priority") | .id')
         git config --local triage.gh-priority-field $GH_PRIORITY_FIELD
         CONFIG_LIST=""

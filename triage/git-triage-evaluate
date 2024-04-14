@@ -238,6 +238,9 @@ function process_issue {
         echo "Setting proposed release for issue"
         gh project item-edit --id $ISSUE_ID --project-id $GH_PROJECT_ID --field-id $GH_PROPOSED_RELEASE_FIELD --single-select-option-id $PROPOSED_RELEASE_ID
 
+        echo "Setting Context for issue to Plan"
+        PLAN_ID=$(gh project field-list --owner openssl 2 --format json --jq ".fields[] | select(.name == \"Context\") | .options[] | select(.name == \"Plan\") | .id")
+        gh project item-edit --id $ISSUE_ID --project-id $GH_PROJECT_ID --field-id $GH_CONTEXT_FIELD --single-select-option-id $PLAN_ID
         echo "Setting priority for issue"
         gh project item-edit --id $ISSUE_ID --project-id $GH_PROJECT_ID --field-id $GH_PRIORITY_FIELD --single-select-option-id $PRIORITY_ID
     fi
