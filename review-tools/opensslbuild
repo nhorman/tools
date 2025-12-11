@@ -32,8 +32,8 @@ case "$CC" in
 esac
 
 # Set the features we want to enable
-ENABLES="enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-tls1_3"
-ENABLES="$ENABLES enable-crypto-mdebug enable-crypto-mdebug-backtrace"
+ENABLES="enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128"
+ENABLES="$ENABLES enable-crypto-mdebug"
 
 make -s clean >/dev/null 2>&1
 ./config $CONFIGARGS $ENABLES $* 2>&1
